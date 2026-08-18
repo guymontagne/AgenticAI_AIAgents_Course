@@ -30,6 +30,7 @@ Get practical experience by building **real-world AI agents** using **Agno**, a 
 ✔️ **Multi-Agent Research Paper Summarizer**  📑  
 ✔️ **Automated Social Media Content Creator**  📲  
 ✔️ **AI-powered Financial Advisor**  💰  
+✔️ **Kalshi × Polymarket arbitrage scanner**  📈  
 ✔️ **Medical AI Diagnosis Helper**  🏥  
 ✔️ **Graph RAG for Law Cases using Neo4j**  ⚖️  
 ✔️ **Autonomous Coding Assistant**  💻  
