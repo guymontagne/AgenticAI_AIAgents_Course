@@ -31,6 +31,10 @@ class _CaptureRedirect(HTTPRedirectHandler):
     """Stop at each hop so only http(s) targets are followed."""
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):
+        try:
+            fp.read()
+        finally:
+            fp.close()
         raise _RedirectFound(newurl)
 
 
@@ -46,16 +50,21 @@ def expand_tiny_url(
     followed one hop at a time, and only ``http`` and ``https`` targets
     are accepted. A URL that does not redirect is returned unchanged.
     """
+    if max_redirects < 0:
+        raise ValueError("max_redirects must be zero or greater")
+
     current = _require_http_url(_with_scheme(url.strip()))
     opener = build_opener(_CaptureRedirect())
+    followed = 0
 
-    for _ in range(max_redirects + 1):
+    while True:
         nxt = _next_hop(opener, current, timeout)
         if nxt is None:
             return current
+        followed += 1
+        if followed > max_redirects:
+            raise ValueError(f"exceeded {max_redirects} redirects for {url!r}")
         current = _require_http_url(urljoin(current, nxt))
-
-    raise ValueError(f"exceeded {max_redirects} redirects for {url!r}")
 
 
 def _with_scheme(url: str) -> str:
@@ -86,6 +95,10 @@ def _next_hop(opener, url: str, timeout: float) -> str | None:
             return found.url
         except HTTPError as exc:
             exc.close()
+            # 3xx here means urllib refused the hop (for example a file: target).
+            # A normal http(s) redirect is delivered as _RedirectFound instead.
+            if 300 <= exc.code < 400 and exc.code != 304:
+                raise
             last_error = exc
             if method == "HEAD" and exc.code in _HEAD_UNSUPPORTED:
                 continue
